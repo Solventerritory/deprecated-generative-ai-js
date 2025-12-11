@@ -30,6 +30,6 @@ export class SmartGenerativeAI {
   }
 
   async listModels() {
-    return this.fallbackManager.getGenerativeAI().listModels();
+    return this.fallbackManager.listModels();
   }
 }

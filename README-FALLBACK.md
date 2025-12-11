@@ -11,7 +11,7 @@ Use the `SmartGenerativeAI` client that automatically discovers available models
 ## Usage
 
 ```typescript
-import { SmartGenerativeAI } from './src/utils/smart-client';
+import { SmartGenerativeAI } from '@google/generative-ai';
 
 const smartAI = new SmartGenerativeAI(process.env.API_KEY);
 
