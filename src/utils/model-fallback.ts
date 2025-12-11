@@ -1,8 +1,16 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Try one of these import patterns:
+// Option 1: From main index
+import { GoogleGenerativeAI } from '../index';
+
+// Known model mappings based on Google's Gemini model availability
+interface ModelInfo {
+  name: string;
+  [key: string]: any;
+}
 
 class ModelFallbackManager {
-  private availableModels: Set<string> | null = null;
   private genAI: GoogleGenerativeAI;
+  private testedModels: Map<string, boolean> = new Map();
   
   // Model fallback priority map
   private readonly fallbackMap: Record<string, string[]> = {
@@ -15,49 +23,50 @@ class ModelFallbackManager {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  async discoverModels(): Promise<Set<string>> {
-    if (this.availableModels) {
-      return this.availableModels;
+  private async isModelAvailable(modelName: string): Promise<boolean> {
+    // Check cache first
+    if (this.testedModels.has(modelName)) {
+      return this.testedModels.get(modelName)!;
     }
 
     try {
-      const models = await this.genAI.listModels();
-      this.availableModels = new Set(
-        models.map(model => model.name.replace('models/', ''))
-      );
-      
-      return this.availableModels;
-    } catch (error) {
-      console.warn('Failed to discover models:', error);
-      this.availableModels = new Set();
-      return this.availableModels;
+      // Try to create a model instance - if it fails, model is not available
+      const model = this.genAI.getGenerativeModel({ model: modelName });
+      // Make a minimal test call to verify availability
+      await model.generateContent('test');
+      this.testedModels.set(modelName, true);
+      return true;
+    } catch (error: any) {
+      // 404 or model not found errors indicate unavailability
+      const isNotFound = error?.message?.includes('404') || 
+                        error?.message?.includes('not found') ||
+                        error?.status === 404;
+      this.testedModels.set(modelName, !isNotFound);
+      return !isNotFound;
     }
   }
 
   async resolveModel(requestedModel: string): Promise<string> {
     const cleanModelName = requestedModel.replace('models/', '');
-    const availableModels = await this.discoverModels();
 
-    // If requested model is available, use it
-    if (availableModels.has(cleanModelName)) {
+    // Try requested model first
+    if (await this.isModelAvailable(cleanModelName)) {
       return cleanModelName;
     }
 
     // Try fallbacks
     const fallbacks = this.fallbackMap[cleanModelName] || [];
     for (const fallback of fallbacks) {
-      if (availableModels.has(fallback)) {
-        console.warn(
-          `Model '${cleanModelName}' not available. Using fallback: '${fallback}'`
-        );
+      if (await this.isModelAvailable(fallback)) {
         return fallback;
       }
     }
 
     // No fallback found
+    const triedModels = [cleanModelName, ...fallbacks].join(', ');
     throw new Error(
       `Model '${cleanModelName}' not found and no suitable fallback available.\n` +
-      `Available models: ${Array.from(availableModels).join(', ')}\n` +
+      `Tried models: ${triedModels}\n` +
       `Tip: New Google Cloud accounts may only have access to Gemini 2.x models.`
     );
   }

@@ -1,4 +1,4 @@
-import { GenerativeModel, ModelParams } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '../index';
 import { ModelFallbackManager } from './model-fallback';
 
 export class SmartGenerativeAI {
@@ -8,7 +8,7 @@ export class SmartGenerativeAI {
     this.fallbackManager = new ModelFallbackManager(apiKey);
   }
 
-  async getGenerativeModel(params: ModelParams | string): Promise<GenerativeModel> {
+  async getGenerativeModel(params: any): Promise<any> {
     const modelName = typeof params === 'string' ? params : params.model;
     
     try {
@@ -27,9 +27,5 @@ export class SmartGenerativeAI {
     } catch (error) {
       throw error;
     }
-  }
-
-  async listModels() {
-    return this.fallbackManager.listModels();
   }
 }

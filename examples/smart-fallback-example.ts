@@ -16,13 +16,6 @@ async function main() {
   } catch (error) {
     console.error('Error:', error);
   }
-
-  // List all available models
-  console.log('\n--- Listing all available models ---');
-  const models = await smartAI.listModels();
-  models.forEach(model => {
-    console.log(`- ${model.name}`);
-  });
 }
 
 main();
