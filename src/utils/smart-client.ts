@@ -25,7 +25,6 @@ export class SmartGenerativeAI {
         return genAI.getGenerativeModel({ ...params, model: resolvedModel });
       }
     } catch (error) {
-      console.error('Failed to get generative model:', error);
       throw error;
     }
   }

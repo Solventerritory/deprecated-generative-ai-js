@@ -1,11 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-interface ModelInfo {
-  name: string;
-  version?: string;
-  displayName?: string;
-}
-
 class ModelFallbackManager {
   private availableModels: Set<string> | null = null;
   private genAI: GoogleGenerativeAI;
@@ -32,7 +26,6 @@ class ModelFallbackManager {
         models.map(model => model.name.replace('models/', ''))
       );
       
-      console.log('Available models:', Array.from(this.availableModels).join(', '));
       return this.availableModels;
     } catch (error) {
       console.warn('Failed to discover models:', error);
